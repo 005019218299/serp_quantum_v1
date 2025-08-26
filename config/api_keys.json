@@ -1,0 +1,30 @@
+{
+  "serpapi_keys": [
+    {
+      "type": "serpapi",
+      "value_key": "1c38a9efbc3a72857e295b0981f84c3856a7799d23cfac9692d772b28a21ff3b",
+      "request_current": 0,
+      "request_limit": 250,
+      "expired": false,
+      "active": true
+    } ,
+    {
+      "type": "serpapi",
+      "value_key": "9010dd16ab4d6b39fea9a7d6c4f4c593c6fc18490851ea55b4b4b03162498d66",
+      "request_current": 125,
+      "request_limit": 250,
+      "expired": false,
+      "active": true
+    }
+  ],
+  "serpstack_keys": [
+    {
+      "type": "serpstack",
+      "value_key": "0522da5d2d2cf25f49d52c9aa938713d", 
+      "request_current": 0,
+      "request_limit": 100,
+      "expired": false,
+      "active": true
+    }
+  ]
+}

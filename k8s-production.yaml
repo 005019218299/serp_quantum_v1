@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: quantum-serp-prod
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quantum-serp-api
+  namespace: quantum-serp-prod
+spec:
+  replicas: 50
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 50%
+      maxUnavailable: 0%
+  selector:
+    matchLabels:
+      app: quantum-serp-api
+  template:
+    metadata:
+      labels:
+        app: quantum-serp-api
+    spec:
+      containers:
+      - name: api
+        image: quantum-serp:v1.8.0
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 2Gi
+          limits:
+            cpu: 2000m
+            memory: 4Gi
+        env:
+        - name: PERFORMANCE_MODE
+          value: "ultra"
+        - name: EDGE_OPTIMIZATION
+          value: "enabled"
+        - name: VERSION
+          value: "1.8.0"
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        ports:
+        - containerPort: 8000
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quantum-serp-service
+  namespace: quantum-serp-prod
+spec:
+  selector:
+    app: quantum-serp-api
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: LoadBalancer
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: quantum-serp-hpa
+  namespace: quantum-serp-prod
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: quantum-serp-api
+  minReplicas: 10
+  maxReplicas: 200
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

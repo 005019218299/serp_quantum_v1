@@ -1,0 +1,144 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: quantum_serp
+      POSTGRES_USER: quantum_user
+      POSTGRES_PASSWORD: quantum_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --maxmemory 1gb --maxmemory-policy allkeys-lru
+
+  elasticsearch:
+    image: elasticsearch:8.11.1
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: quantum
+      RABBITMQ_DEFAULT_PASS: quantum123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  huggingface:
+    image: huggingface/transformers-pytorch-gpu:latest
+    ports:
+      - "8080:8080"
+    environment:
+      - HUGGINGFACE_HUB_CACHE=/app/cache
+    volumes:
+      - huggingface_cache:/app/cache
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+        reservations:
+          memory: 4G
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://admin:Anh12345@postgresql-201376-0.cloudclusters.net:19976/aws
+      - REDIS_URL=redis://default:FqCRUeurO3Y0PzOGhsJMnBah6VxOl7Am@redis-10481.c289.us-west-1-2.ec2.redns.redis-cloud.com:10481
+      - RABBITMQ_URL=amqp://quantum:quantum123@rabbitmq:5672
+      - HUGGINGFACE_URL=http://huggingface:8080
+      - PERFORMANCE_MODE=ultra
+      - VERSION=1.8.0
+    depends_on:
+      - postgres
+      - redis
+      - elasticsearch
+      - rabbitmq
+      - huggingface
+    volumes:
+      - ./models:/app/models
+    deploy:
+      replicas: 4
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+
+  worker:
+    build: .
+    command: celery -A workers.celery_worker worker --loglevel=info --concurrency=8
+    environment:
+      - DATABASE_URL=postgresql://admin:Anh12345@postgresql-201376-0.cloudclusters.net:19976/aws
+      - REDIS_URL=redis://default:FqCRUeurO3Y0PzOGhsJMnBah6VxOl7Am@redis-10481.c289.us-west-1-2.ec2.redns.redis-cloud.com:10481
+      - RABBITMQ_URL=amqp://quantum:quantum123@rabbitmq:5672
+      - HUGGINGFACE_URL=http://huggingface:8080
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+      - huggingface
+    volumes:
+      - ./models:/app/models
+    deploy:
+      replicas: 2
+
+  beat:
+    build: .
+    command: celery -A workers.celery_worker beat --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://admin:Anh12345@postgresql-201376-0.cloudclusters.net:19976/aws
+      - REDIS_URL=redis://default:FqCRUeurO3Y0PzOGhsJMnBah6VxOl7Am@redis-10481.c289.us-west-1-2.ec2.redns.redis-cloud.com:10481
+      - RABBITMQ_URL=amqp://quantum:quantum123@rabbitmq:5672
+      - HUGGINGFACE_URL=http://huggingface:8080
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+      - huggingface
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  postgres_data:
+  redis_data:
+  elasticsearch_data:
+  grafana_data:
+  huggingface_cache:

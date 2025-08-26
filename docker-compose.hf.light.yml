@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: quantum_serp
+      POSTGRES_USER: quantum_user
+      POSTGRES_PASSWORD: quantum_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api-hf-light:
+    build:
+      context: .
+      dockerfile: Dockerfile.huggingface.light
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://admin:Anh12345@postgresql-201376-0.cloudclusters.net:19976/aws
+      - REDIS_URL=redis://redis:6379
+      - HF_HOME=/app/hf_cache
+      - ENABLE_MONITORING=true
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./hf_models:/app/hf_models
+      - hf_cache:/app/hf_cache
+
+volumes:
+  postgres_data:
+  hf_cache:

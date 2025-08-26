@@ -1,0 +1,52 @@
+# Distributed Training System Requirements
+
+# Core Framework
+fastapi 
+uvicorn[standard] 
+pydantic               
+
+# Async & Concurrency
+asyncio
+aiohttp     
+aioredis 
+asyncpg 
+
+# Data Processing
+pandas 
+numpy 
+scikit-learn 
+
+# Storage & Database
+redis 
+psycopg2-binary 
+boto3 
+
+# Google Drive API (optional)
+google-api-python-client 
+google-auth-httplib2 
+google-auth-oauthlib 
+
+# Monitoring & Logging
+prometheus-client 
+structlog 
+
+# HTTP & Web Scraping
+requests 
+httpx 
+beautifulsoup4 
+selenium 
+
+# Task Queue (optional)
+celery 
+kombu 
+
+# Development
+pytest 
+pytest-asyncio 
+black 
+flake8 
+
+# Existing requirements from main system
+torch 
+transformers 
+tensorflow 
