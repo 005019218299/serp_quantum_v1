@@ -72,7 +72,7 @@ class DistributedWorkerManager:
             'credentials': {
                 'google_drive': {
                     'folder_id': 'Data_AI',
-                    'service_account_key': self._get_safe_path('config/credentials/google_drive/fit-heaven-453117-m1-79222e8ee670.json')
+                    'service_account_key': self._get_safe_path('config/fit-heaven-453117-m1-79222e8ee670.json')
                 }
             }
         }
